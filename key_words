@@ -1,0 +1,42 @@
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
+from sklearn.feature_extraction.text import CountVectorizer
+import pandas as pd
+
+print ("Enter pathway of file")
+text = input() 
+
+text = open(text,"r", encoding='utf-8')
+text = text.read()
+
+stop_words = set(stopwords.words('russian'))
+corpus = []
+    
+# нижний регистр
+text = text.lower()
+    
+# тэги
+text=re.sub("&lt;/?.*?&gt;"," &lt;&gt; ",text)
+    
+# символы
+text=re.sub("(\\d|\\W)+"," ",text)
+    
+text = text.split()
+    
+##Stemming
+stemmer = SnowballStemmer("russian") 
+
+text = [stemmer.stem(word) for word in text if not word in stop_words] 
+text = " ".join(text)
+corpus.append(text)
+
+vec = CountVectorizer().fit(corpus)
+bag_of_words = vec.transform(corpus)
+sum_words = bag_of_words.sum(axis=0) 
+words_freq = [(word, sum_words[0, idx]) for word, idx in vec.vocabulary_.items()]
+words_freq =sorted(words_freq, key = lambda x: x[1], reverse=True)
+
+df = pd.DataFrame(data=words_freq)
+export_csv = df.to_csv('key_words.csv', index = None, header=True,encoding='utf-8-sig') 
